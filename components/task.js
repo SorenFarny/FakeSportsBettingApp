@@ -14,11 +14,8 @@ const Task = ({ team1, team2, odds1, odds2, id, commence_time, onPress }) => {
     return (
         <View style={styles.item}>
             <View style={styles.itemLeft}>
-                <Text style={styles.itemText}>{team1 + " vs. "}</Text>
-                <Text style={styles.itemText}>{team2 + " "}</Text>
-                <Text style={styles.itemText}>{odds1 + " "}</Text>
-                <Text style={styles.itemText}>{odds2 + " "}</Text>
-                <Text style={styles.itemText}>{commence_time + " "}</Text>
+                <Text style={styles.itemText}>{team1} vs. {team2}</Text>
+                <Text style={styles.itemText}>Odds: {odds1} / {odds2}      Commence time: {commence_time}</Text>
                 <Picker
                     selectedValue={selectedTeam}
                     style={styles.picker}
@@ -44,13 +41,18 @@ const Task = ({ team1, team2, odds1, odds2, id, commence_time, onPress }) => {
 
 const styles = StyleSheet.create({
     item: {
-        backgroundColor: '#d6d6d6',
-        padding: 15,
+        backgroundColor: '#f8f9fa',
+        padding: 20,
         borderRadius: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
         marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 3,
     },
     itemLeft: {
         flexDirection: 'column',
@@ -59,26 +61,32 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     itemText: {
-        maxWidth: '80%',
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#333',
+        marginBottom: 10,
     },
     picker: {
         height: 50,
-        width: 150,
+        width: '100%',
+        marginBottom: 10,
     },
     input: {
         height: 40,
-        borderColor: 'white',
+        borderColor: '#ced4da',
         borderWidth: 1,
         marginBottom: 10,
         paddingHorizontal: 10,
-        width: 100,
-        backgroundColor: "white",
+        width: '100%',
+        backgroundColor: "#fff",
+        borderRadius: 5,
     },
     button: {
-        backgroundColor: '#55BCF6',
+        backgroundColor: '#007bff',
         padding: 10,
         borderRadius: 5,
         alignItems: 'center',
+        width: '100%',
     },
     buttonText: {
         color: '#fff',

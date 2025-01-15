@@ -1,11 +1,11 @@
 import betData from '../data/betData.json'; // Adjust the path if necessary
 
-export const getTeamsWithDraftKingsPrices = () => {
+export const getTeamsWithDraftKingsPrices = (betData) => {
   return betData.map(bet => {
-    const draftKings = bet.bookmakers.find(bookmaker => bookmaker.key === 'draftkings');
-    if (draftKings) {
-      const homeTeamOutcome = draftKings.markets[0].outcomes.find(outcome => outcome.name === bet.home_team);
-      const awayTeamOutcome = draftKings.markets[0].outcomes.find(outcome => outcome.name === bet.away_team);
+    const fanduel = bet.bookmakers.find(bookmaker => bookmaker.key === 'fanduel');
+    if (fanduel) {
+      const homeTeamOutcome = fanduel.markets[0].outcomes.find(outcome => outcome.name === bet.home_team);
+      const awayTeamOutcome = fanduel.markets[0].outcomes.find(outcome => outcome.name === bet.away_team);
       return {
         id: bet.id,
         home_team: bet.home_team,
