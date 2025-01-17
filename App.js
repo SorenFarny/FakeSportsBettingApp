@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Task from './components/task';
 import { getTeamsWithDraftKingsPrices } from './api/parsing';
 import { addMoney, placeBet, checkResults } from './moneyHandling/money';
-import NewPage from './components/NewPage';
+import MyBets from './components/MyBets';
 import { TaskProvider, TaskContext } from './context/TaskContext'; // Import TaskProvider and TaskContext
 import { fetchBets, saveBetsToFile, clearAllLocalStorage } from './api/betsApi'; // Import fetchBets, saveBetsToFile, and clearAllLocalStorage functions
 
@@ -79,18 +79,13 @@ function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Betting App</Text>
-      </View>
-      <View style={styles.header}>
-        <Button title="Go to New Page" onPress={() => navigation.navigate('NewPage')} />
-      </View>
+ 
       <View style={styles.moneyWrapper}>
         <Text style={styles.moneyText}>Current Money: ${money}</Text>
       </View>
       <View style={styles.tasksWrapper}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={styles.sectionTitle}>Teams with DraftKings Prices</Text>
+          <Text style={styles.sectionTitle}> NFL Games: </Text>
           <View style={styles.items}>
             {teams.map((team, index) => (
               !isTeamInCurrentBets(team.home_team) && !isTeamInCurrentBets(team.away_team) && (
@@ -118,8 +113,20 @@ export default function App() {
     <TaskProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="NewPage" component={NewPage} />
+          <Stack.Screen 
+            name="Home" 
+            component={HomeScreen} 
+            options={({ navigation }) => ({
+              headerRight: () => (
+                <Button
+                  onPress={() => navigation.navigate('MyBets')}
+                  title="Go to My Bets"
+                  color="#007bff"
+                />
+              ),
+            })}
+          />
+          <Stack.Screen name="MyBets" component={MyBets} />
         </Stack.Navigator>
       </NavigationContainer>
     </TaskProvider>

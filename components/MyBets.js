@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const NewPage = () => {
+const MyBets = () => {
   const [currentBets, setCurrentBets] = useState({});
 
   useEffect(() => {
@@ -55,4 +55,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NewPage;
+export default MyBets;
