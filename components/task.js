@@ -47,17 +47,19 @@ const styles = StyleSheet.create({
         backgroundColor: '#d6d6d6',
         padding: 15,
         borderRadius: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 20,
-    },
-    itemLeft: {
         flexDirection: 'column',
         alignItems: 'flex-start',
+       // justifyContent: 'space-between',
+        marginBottom: 20,
+        //width: '90%',
+    },
+    itemLeft: {
+        //flexDirection: 'column',
+       // alignItems: 'flex-start',
     },
     itemText: {
-        maxWidth: '80%',
+        maxWidth: '90%',
+        fontSize: 16,
     },
     row: {
         flexDirection: 'row',
@@ -66,8 +68,6 @@ const styles = StyleSheet.create({
     picker: {
         height: 50,
         width: 150,
-        paddingHorizontal: 10,
-        paddingVertical: 10,
     },
     input: {
         height: 50,

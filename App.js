@@ -79,13 +79,12 @@ function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
- 
       <View style={styles.moneyWrapper}>
         <Text style={styles.moneyText}>Current Money: ${money}</Text>
       </View>
       <View style={styles.tasksWrapper}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={styles.sectionTitle}> NFL Games: </Text>
+          <Text style={styles.sectionTitle}>Games not bet on:</Text>
           <View style={styles.items}>
             {teams.map((team, index) => (
               !isTeamInCurrentBets(team.home_team) && !isTeamInCurrentBets(team.away_team) && (
@@ -107,6 +106,7 @@ function HomeScreen({ navigation }) {
     </View>
   );
 }
+
 
 export default function App() {
   return (
@@ -133,9 +133,10 @@ export default function App() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+   flex: 1,
     backgroundColor: '#f8f9fa',
   },
   header: {
@@ -158,8 +159,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   tasksWrapper: {
-    flex: 1,
-    paddingHorizontal: 20,
+    //flex: 1,
+    padding: 60,
   },
   sectionTitle: {
     fontSize: 24,
@@ -179,5 +180,6 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     alignItems: 'center',
-  },
+  }
+
 });
