@@ -1,24 +1,39 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { StyleSheet, Text, View, ScrollView, Button } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { StyleSheet, Text, View, FlatList, Button, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Task from './components/task';
 import { getTeamsWithDraftKingsPrices } from './api/parsing';
-import { addMoney, placeBet } from './moneyHandling/money';
-import NewPage from './components/NewPage';
+import { addMoney, placeBet, checkResults } from './moneyHandling/money';
+import MyBets from './components/MyBets';
 import { TaskProvider, TaskContext } from './context/TaskContext'; // Import TaskProvider and TaskContext
+import { fetchBets, saveBetsToFile, clearAllLocalStorage } from './api/betsApi'; // Import fetchBets, saveBetsToFile, and clearAllLocalStorage functions
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 function HomeScreen({ navigation }) {
   const [teams, setTeams] = useState([]);
   const [money, setMoney] = useState(0); // State variable to store the current amount of money
+  const [currentBets, setCurrentBets] = useState({}); // State variable to store the current bets
   const { addTask } = useContext(TaskContext);
 
   useEffect(() => {
-    const teamsArray = getTeamsWithDraftKingsPrices();
-    setTeams(teamsArray);
+    const loadTeams = async () => {
+      try {
+        // Fetch and save bets if not already in AsyncStorage
+        await saveBetsToFile();
+        const teamsArray = await getTeamsWithDraftKingsPrices();
+        console.log('Parsed teams data:', teamsArray); // Log parsed data
+        setTeams(teamsArray); // Update the teams state variable with the parsed data
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+      }
+    };
+
+    loadTeams();
 
     // Load the current amount of money from local storage
     const loadMoney = async () => {
@@ -33,6 +48,26 @@ function HomeScreen({ navigation }) {
     };
 
     loadMoney();
+
+    // Load current bets from local storage
+    const loadCurrentBets = async () => {
+      try {
+        const storedBets = await AsyncStorage.getItem('currentBets');
+        if (storedBets !== null) {
+          setCurrentBets(JSON.parse(storedBets));
+        }
+      } catch (error) {
+        console.error('Error loading current bets from local storage:', error);
+      }
+    };
+
+    loadCurrentBets();
+    checkResults();
+    
+  }, []);
+
+  useEffect(() => {
+    clearAllLocalStorage(); // Clear all local storage data
   }, []);
 
   const handlePlaceBet = async (amount, selectedTeam, selectedOdds, id, commence_time) => {
@@ -44,30 +79,60 @@ function HomeScreen({ navigation }) {
     }
   }
 
+  const isTeamInCurrentBets = (teamName) => {
+    return Object.values(currentBets).some(bet => bet.team === teamName);
+  }
+
   return (
     <View style={styles.container}>
+      <View style={styles.moneyWrapper}>
+        <Text style={styles.moneyText}>Current Money: ${money}</Text>
+      </View>
       <View style={styles.tasksWrapper}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={styles.sectionTitle}>Teams with DraftKings Prices</Text>
-          <Text>Money: {money}</Text>
-          <Button title="Go to New Page" onPress={() => navigation.navigate('NewPage')} />
-          <View style={styles.items}>
-            {teams.map((team, index) => (
-              <Task
-                key={index}
-                team1={team.home_team}
-                team2={team.away_team}
-                odds1={team.home_team_price}
-                odds2={team.away_team_price}
-                id={team.id}
-                commence_time={team.commence_time}
-                onPress={(amount, selectedTeam, selectedOdds, id, commence_time) => handlePlaceBet(amount, selectedTeam, selectedOdds, id, commence_time)}
-              />
-            ))}
-          </View>
-        </ScrollView>
+        <Text style={styles.sectionTitle}>Games not bet on:</Text>
+        <FlatList
+          data={teams.filter(team => !isTeamInCurrentBets(team.home_team) && !isTeamInCurrentBets(team.away_team))}
+          renderItem={({ item }) => (
+            <Task
+              team1={item.home_team}
+              team2={item.away_team}
+              odds1={item.home_team_price}
+              odds2={item.away_team_price}
+              id={item.id}
+              commence_time={item.commence_time}
+              onPress={(amount, selectedTeam, selectedOdds, id, commence_time) => handlePlaceBet(amount, selectedTeam, selectedOdds, id, commence_time)}
+            />
+          )}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.flatListContent}
+        />
       </View>
     </View>
+  );
+}
+
+function HomeStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        cardStyle: { flex: 1 }, // Ensure the stack navigator's content takes up the full height
+      }}
+    >
+      <Stack.Screen 
+        name="Home" 
+        component={HomeScreen} 
+        options={({ navigation }) => ({
+          headerRight: () => (
+            <Button
+              onPress={() => navigation.navigate('MyBets')}
+              title="Go to My Bets"
+              color="#007bff"
+            />
+          ),
+        })}
+      />
+      <Stack.Screen name="MyBets" component={MyBets} />
+    </Stack.Navigator>
   );
 }
 
@@ -75,10 +140,10 @@ export default function App() {
   return (
     <TaskProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="NewPage" component={NewPage} />
-        </Stack.Navigator>
+        <Tab.Navigator screenOptions={{ headerShown: false }}>
+          <Tab.Screen name="Home" component={HomeStack} />
+          {/* Add other tabs here */}
+        </Tab.Navigator>
       </NavigationContainer>
     </TaskProvider>
   );
@@ -87,24 +152,56 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    backgroundColor: '#007bff',
+    padding: 20,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  moneyWrapper: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  moneyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
   tasksWrapper: {
-    paddingTop: 80,
-    paddingHorizontal: 20,
     flex: 1,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
+  flatListContent: {
     paddingBottom: 20,
   },
   items: {
     flex: 1,
+  },
+  footer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    margin: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
