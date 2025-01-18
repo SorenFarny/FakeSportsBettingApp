@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MyBets = () => {
@@ -20,24 +20,27 @@ const MyBets = () => {
     fetchBets();
   }, []);
 
+  const renderItem = ({ item }) => (
+    <View style={styles.taskContainer}>
+      <Text style={styles.taskText}>Team: {item.team}</Text>
+      <Text style={styles.taskText}>Odds: {item.odds}</Text>
+      <Text style={styles.taskText}>Amount: {item.amount}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Bets</Text>
-      </View>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-        {Object.keys(currentBets).length === 0 ? (
-          <Text style={styles.noBetsText}>No bets placed yet.</Text>
-        ) : (
-          Object.keys(currentBets).map((key, index) => (
-            <View key={index} style={styles.taskContainer}>
-              <Text style={styles.taskText}>Team: {currentBets[key].team}</Text>
-              <Text style={styles.taskText}>Odds: {currentBets[key].odds}</Text>
-              <Text style={styles.taskText}>Amount: {currentBets[key].amount}</Text>
-            </View>
-          ))
-        )}
-      </ScrollView>
+      
+      {Object.keys(currentBets).length === 0 ? (
+        <Text style={styles.noBetsText}>No bets placed yet.</Text>
+      ) : (
+        <FlatList
+          data={Object.keys(currentBets).map(key => ({ ...currentBets[key], key }))}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.key}
+          contentContainerStyle={styles.flatListContent}
+        />
+      )}
     </View>
   );
 };
@@ -57,10 +60,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
+  flatListContent: {
     padding: 20,
   },
   noBetsText: {

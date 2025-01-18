@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-let key = "6680a06291e7ea0058cb2c1edcb720bc";
+let key = "a8e739586cc1a734e6b03f997473e38e";
 let url = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds?apiKey=" + key + "&regions=us&oddsFormat=american";
 let url2 = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/scores/?daysFrom=3&apiKey=" + key;
 

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { StyleSheet, Text, View, ScrollView, Button } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { StyleSheet, Text, View, FlatList, Button, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Task from './components/task';
 import { getTeamsWithDraftKingsPrices } from './api/parsing';
@@ -11,6 +12,7 @@ import { TaskProvider, TaskContext } from './context/TaskContext'; // Import Tas
 import { fetchBets, saveBetsToFile, clearAllLocalStorage } from './api/betsApi'; // Import fetchBets, saveBetsToFile, and clearAllLocalStorage functions
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 function HomeScreen({ navigation }) {
   const [teams, setTeams] = useState([]);
@@ -64,6 +66,10 @@ function HomeScreen({ navigation }) {
     
   }, []);
 
+  useEffect(() => {
+    clearAllLocalStorage(); // Clear all local storage data
+  }, []);
+
   const handlePlaceBet = async (amount, selectedTeam, selectedOdds, id, commence_time) => {
     await placeBet(amount, selectedTeam, selectedOdds, id, addTask, commence_time);
     // Update the money state variable after placing a bet
@@ -83,60 +89,69 @@ function HomeScreen({ navigation }) {
         <Text style={styles.moneyText}>Current Money: ${money}</Text>
       </View>
       <View style={styles.tasksWrapper}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
-          <Text style={styles.sectionTitle}>Games not bet on:</Text>
-          <View style={styles.items}>
-            {teams.map((team, index) => (
-              !isTeamInCurrentBets(team.home_team) && !isTeamInCurrentBets(team.away_team) && (
-                <Task
-                  key={index}
-                  team1={team.home_team}
-                  team2={team.away_team}
-                  odds1={team.home_team_price}
-                  odds2={team.away_team_price}
-                  id={team.id}
-                  commence_time={team.commence_time}
-                  onPress={(amount, selectedTeam, selectedOdds, id, commence_time) => handlePlaceBet(amount, selectedTeam, selectedOdds, id, commence_time)}
-                />
-              )
-            ))}
-          </View>
-        </ScrollView>
+        <Text style={styles.sectionTitle}>Games not bet on:</Text>
+        <FlatList
+          data={teams.filter(team => !isTeamInCurrentBets(team.home_team) && !isTeamInCurrentBets(team.away_team))}
+          renderItem={({ item }) => (
+            <Task
+              team1={item.home_team}
+              team2={item.away_team}
+              odds1={item.home_team_price}
+              odds2={item.away_team_price}
+              id={item.id}
+              commence_time={item.commence_time}
+              onPress={(amount, selectedTeam, selectedOdds, id, commence_time) => handlePlaceBet(amount, selectedTeam, selectedOdds, id, commence_time)}
+            />
+          )}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.flatListContent}
+        />
       </View>
     </View>
   );
 }
 
+function HomeStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        cardStyle: { flex: 1 }, // Ensure the stack navigator's content takes up the full height
+      }}
+    >
+      <Stack.Screen 
+        name="Home" 
+        component={HomeScreen} 
+        options={({ navigation }) => ({
+          headerRight: () => (
+            <Button
+              onPress={() => navigation.navigate('MyBets')}
+              title="Go to My Bets"
+              color="#007bff"
+            />
+          ),
+        })}
+      />
+      <Stack.Screen name="MyBets" component={MyBets} />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
   return (
     <TaskProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen 
-            name="Home" 
-            component={HomeScreen} 
-            options={({ navigation }) => ({
-              headerRight: () => (
-                <Button
-                  onPress={() => navigation.navigate('MyBets')}
-                  title="Go to My Bets"
-                  color="#007bff"
-                />
-              ),
-            })}
-          />
-          <Stack.Screen name="MyBets" component={MyBets} />
-        </Stack.Navigator>
+        <Tab.Navigator screenOptions={{ headerShown: false }}>
+          <Tab.Screen name="Home" component={HomeStack} />
+          {/* Add other tabs here */}
+        </Tab.Navigator>
       </NavigationContainer>
     </TaskProvider>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
-   flex: 1,
+    flex: 1,
     backgroundColor: '#f8f9fa',
   },
   header: {
@@ -159,8 +174,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   tasksWrapper: {
-    //flex: 1,
-    padding: 60,
+    flex: 1,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 24,
@@ -168,10 +183,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#333',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
+  flatListContent: {
     paddingBottom: 20,
   },
   items: {
@@ -180,6 +192,16 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     alignItems: 'center',
-  }
-
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    margin: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
