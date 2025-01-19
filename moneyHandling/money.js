@@ -1,13 +1,13 @@
 import { TaskContext } from '../context/TaskContext';
 import React, { useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { getResults } from '../api/betsApi';
 
 const startingAmount = 100000;
-let currMoney = startingAmount; // Example initial value
-let currentBets = {}; // Initialize the currentBets dictionary
+let currMoney = startingAmount; 
+let currentBets = {}; 
 
-// Load existing bets and money from local storage when the app starts
+
 const loadCurrentBetsAndMoney = async () => {
   try {
     const bets = await AsyncStorage.getItem('currentBets');
@@ -23,7 +23,7 @@ const loadCurrentBetsAndMoney = async () => {
   }
 };
 
-// Call loadCurrentBetsAndMoney to initialize currentBets and currMoney
+
 loadCurrentBetsAndMoney();
 
 export const getMoney = () => {
@@ -93,7 +93,17 @@ export const winBet = (amount, odds) => {
   if (!Number.isInteger(amount) || amount <= 0) {
     throw new Error('Amount must be a positive integer');
   }
-  currMoney += amount * odds;
+
+  let winnings;
+  if (odds > 0) {
+    // Positive odds
+    winnings = (amount * odds) / 100;
+  } else {
+    // Negative odds
+    winnings = (amount * 100) / Math.abs(odds);
+  }
+
+  currMoney += amount + winnings; 
   console.log(currMoney);
   return currMoney;
 };
