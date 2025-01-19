@@ -1,14 +1,13 @@
 import { TaskContext } from '../context/TaskContext';
 import React, { useContext } from 'react';
-import * as FileSystem from 'expo-file-system'; // Import Expo FileSystem
-import { Platform } from 'react-native'; // Import Platform module
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import { getResults } from '../api/betsApi';
 
 const startingAmount = 100000;
-let currMoney = startingAmount; // Example initial value
-let currentBets = {}; // Initialize the currentBets dictionary
+let currMoney = startingAmount; 
+let currentBets = {}; 
 
-// Load existing bets and money from local storage when the app starts
+
 const loadCurrentBetsAndMoney = async () => {
   try {
     const bets = await AsyncStorage.getItem('currentBets');
@@ -24,9 +23,8 @@ const loadCurrentBetsAndMoney = async () => {
   }
 };
 
-// Call loadCurrentBetsAndMoney to initialize currentBets and currMoney
-loadCurrentBetsAndMoney();
 
+loadCurrentBetsAndMoney();
 
 export const getMoney = () => {
   console.log(currMoney);
@@ -38,7 +36,6 @@ export const subtractMoney = (amount) => {
     throw new Error('Amount must be a positive integer');
   }
   currMoney -= amount;
-  
   return currMoney;
 };
 
@@ -56,6 +53,11 @@ export const placeBet = async (amount, selectedTeam, selectedOdds, id, addTask, 
   amount = parseInt(amount, 10);
   console.log(commence_time);
 
+  const newDate = new Date(commence_time);
+  const currentTime = new Date().toISOString();
+  if (newDate < currentTime) {
+    throw new Error('Cannot place bet on a game that has already started');
+  }
   if (!Number.isInteger(amount) || amount <= 0) {
     throw new Error('Amount must be a positive integer');
   }
@@ -65,28 +67,22 @@ export const placeBet = async (amount, selectedTeam, selectedOdds, id, addTask, 
   if (currentBets[id]) {
     throw new Error('Bet already placed for this game');
   }
+
   subtractMoney(amount);
   console.log(currMoney);
   
   console.log(id, selectedTeam, selectedOdds);
 
-  // Get the current time from the user's machine
-  const currentTime = new Date().toISOString();
-  console.log('Current Time:', currentTime);
-  
   const newTask = {
     id,
     team: selectedTeam,
     odds: selectedOdds,
     commence_time,
-    placed_time: currentTime, // Add the current time to the task
   };
   addTask(newTask);
 
-  // Update the currentBets dictionary
-  currentBets[id] = { team: selectedTeam, odds: selectedOdds, amount, commence_time, placed_time: currentTime };
+  currentBets[id] = { team: selectedTeam, odds: selectedOdds, amount, commence_time };
 
-  // Save currentBets and currMoney to local storage
   await saveToLocalStorage(currentBets, currMoney);
   
   return currMoney;
@@ -97,7 +93,17 @@ export const winBet = (amount, odds) => {
   if (!Number.isInteger(amount) || amount <= 0) {
     throw new Error('Amount must be a positive integer');
   }
-  currMoney += amount * odds;
+
+  let winnings;
+  if (odds > 0) {
+    // Positive odds
+    winnings = (amount * odds) / 100;
+  } else {
+    // Negative odds
+    winnings = (amount * 100) / Math.abs(odds);
+  }
+
+  currMoney += amount + winnings; 
   console.log(currMoney);
   return currMoney;
 };
@@ -128,5 +134,47 @@ const saveToLocalStorage = async (bets, money) => {
     console.log('Data saved to localStorage:', { bets, money });
   } catch (error) {
     console.error('Error saving data to localStorage:', error);
+  }
+};
+
+export const checkResults = async () => {
+  console.log('Checking results...');
+  try {
+    const results = await getResults();
+    const currentTime = new Date();
+
+    for (const [id, bet] of Object.entries(currentBets)) {
+      const { team, amount, odds, commence_time } = bet;
+      const gameTime = new Date(commence_time);
+
+      // Remove bet if the game time is before the current time
+      if (gameTime < currentTime) {
+        const result = results.find(result => result.id === id);
+        if (result && result.completed) {
+          const homeTeamScore = result.scores.find(score => score.name === result.home_team).score;
+          const awayTeamScore = result.scores.find(score => score.name === result.away_team).score;
+
+          let won = false;
+          if (team === result.home_team && homeTeamScore > awayTeamScore) {
+            won = true;
+          } else if (team === result.away_team && awayTeamScore > homeTeamScore) {
+            won = true;
+          }
+
+          if (won) {
+            console.log(`Bet on ${team} won!`);
+            winBet(amount, odds);
+          } else {
+            console.log(`Bet on ${team} lost.`);
+          }
+        }
+
+        delete currentBets[id];
+      }
+    }
+
+    await saveToLocalStorage(currentBets, currMoney);
+  } catch (error) {
+    console.error('Error checking results:', error);
   }
 };
