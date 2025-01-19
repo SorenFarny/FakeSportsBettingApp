@@ -1,5 +1,5 @@
 // filepath: /c:/wanttodie/mockbet/api/betsApi.js
-let key = "6680a06291e7ea0058cb2c1edcb720bc";
+let key = "YOUR_API_KEY";
 let url = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds?apiKey=" + key + "&regions=us&oddsFormat=american";
 
 
