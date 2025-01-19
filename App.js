@@ -35,20 +35,7 @@ function HomeScreen({ navigation }) {
 
     loadTeams();
 
-    // Load the current amount of money from local storage
-    const loadMoney = async () => {
-      try {
-        const storedMoney = await AsyncStorage.getItem('currMoney');
-        if (storedMoney !== null) {
-          setMoney(JSON.parse(storedMoney));
-        }
-      } catch (error) {
-        console.error('Error loading money from local storage:', error);
-      }
-    };
-
-    loadMoney();
-
+ 
     // Load current bets from local storage
     const loadCurrentBets = async () => {
       try {
@@ -65,14 +52,29 @@ function HomeScreen({ navigation }) {
     checkResults();
     
   }, []);
+     // Load the current amount of money from local storage
+     const loadMoney = async () => {
+      try {
+        const storedMoney = await AsyncStorage.getItem('currMoney');
+        if (storedMoney !== null) {
+          setMoney(JSON.parse(storedMoney));
+          if (storedMoney <= 0) {
+            await AsyncStorage.setItem('currMoney', JSON.stringify(100000));
+            setMoney(100000);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading money from local storage:', error);
+      }
+    };
 
+loadMoney();
   useEffect(() => {
-    clearAllLocalStorage(); // Clear all local storage data
+    clearAllLocalStorage(); 
   }, []);
 
   const handlePlaceBet = async (amount, selectedTeam, selectedOdds, id, commence_time) => {
     await placeBet(amount, selectedTeam, selectedOdds, id, addTask, commence_time);
-    // Update the money state variable after placing a bet
     const storedMoney = await AsyncStorage.getItem('currMoney');
     if (storedMoney !== null) {
       setMoney(JSON.parse(storedMoney));
@@ -115,7 +117,7 @@ function HomeStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        cardStyle: { flex: 1 }, // Ensure the stack navigator's content takes up the full height
+        cardStyle: { flex: 1 }, 
       }}
     >
       <Stack.Screen 
@@ -142,7 +144,7 @@ export default function App() {
       <NavigationContainer>
         <Tab.Navigator screenOptions={{ headerShown: false }}>
           <Tab.Screen name="Home" component={HomeStack} />
-          {/* Add other tabs here */}
+         
         </Tab.Navigator>
       </NavigationContainer>
     </TaskProvider>
